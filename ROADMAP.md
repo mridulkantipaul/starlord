@@ -27,3 +27,6 @@
 
 ## Phase 5 — UX
 - [x] Desktop GUI (Tkinter)
+- [x] Desktop GUI (Qt)
+- [x] System tray
+- [x] Local API server

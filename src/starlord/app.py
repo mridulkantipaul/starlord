@@ -13,12 +13,18 @@ from starlord.io.voice import VoiceIO
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Star Lord CLI")
     parser.add_argument("--voice", action="store_true", help="Enable voice output (TTS)")
-    parser.add_argument("--gui", action="store_true", help="Launch desktop GUI")
+    parser.add_argument("--gui", action="store_true", help="Launch desktop GUI (Tkinter)")
+    parser.add_argument("--gui-qt", action="store_true", help="Launch desktop GUI (Qt)")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if args.gui_qt:
+        from starlord.gui_qt import main as gui_main
+
+        gui_main()
+        return
     if args.gui:
         from starlord.gui import main as gui_main
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "starlord"
-version = "0.1.0"
+version = "0.2.0"
 description = "Star Lord — a local-first JARVIS-like AI agent"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -16,7 +16,9 @@ classifiers = [
   "Operating System :: OS Independent",
 ]
 
-dependencies = []
+dependencies = [
+  "PySide6>=6.6",
+]
 
 [project.scripts]
 starlord = "starlord.app:main"
