@@ -2,7 +2,7 @@
 
 A JARVIS-like **personal AI agent** built for **local-first** use on desktop and mobile. Star Lord is designed to support **voice-first** interaction (with text fallback), act as a **coding helper**, and integrate with **smart home** control—while staying **open-source** and privacy-friendly.
 
-> Status: initial scaffold (pluggable adapters + stubs)
+> Status: initial scaffold + **voice adapters (STT/TTS) stubs**
 
 ## Goals
 - Personal assistant (tasks, reminders, knowledge, workflows)
@@ -18,6 +18,9 @@ pip install -e .
 python -m starlord.app
 ```
 
+## Voice (Open-Source)
+See `VOICE.md` for supported engines and setup notes.
+
 ## Structure
 - `src/starlord/app.py` — CLI entrypoint
 - `src/starlord/core/` — agent core (router, memory, orchestrator)
@@ -30,6 +33,7 @@ python -m starlord.app
 - `ARCHITECTURE.md` — core architecture & flow
 - `ROADMAP.md` — near-term milestones
 - `CONTRIBUTING.md` — contribution guidelines
+- `VOICE.md` — STT/TTS adapters and setup
 
 ## License
 TBD (open-source)

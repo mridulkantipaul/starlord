@@ -6,8 +6,8 @@
 - [x] IO/tool/skill stubs
 
 ## Phase 1 — Voice MVP
-- [ ] Add STT adapter (open-source)
-- [ ] Add TTS adapter (open-source)
+- [x] Add STT adapters (open-source)
+- [x] Add TTS adapters (open-source)
 - [ ] Unified IO interface
 
 ## Phase 2 — Core Intelligence
