@@ -13,11 +13,18 @@ from starlord.io.voice import VoiceIO
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Star Lord CLI")
     parser.add_argument("--voice", action="store_true", help="Enable voice output (TTS)")
+    parser.add_argument("--gui", action="store_true", help="Launch desktop GUI")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if args.gui:
+        from starlord.gui import main as gui_main
+
+        gui_main()
+        return
+
     settings = Settings(voice_enabled=bool(args.voice))
     agent = Agent(name=settings.agent_name)
     voice = VoiceIO(settings)

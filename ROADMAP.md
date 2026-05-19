@@ -24,3 +24,6 @@
 - [x] Android/iOS scaffolding
 - [ ] Android/iOS wrappers
 - [ ] On-device model options
+
+## Phase 5 — UX
+- [x] Desktop GUI (Tkinter)
