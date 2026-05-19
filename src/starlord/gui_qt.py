@@ -66,8 +66,8 @@ class MainWindow(QMainWindow):
 
         self.action_finished.connect(self._on_action_finished)
         self.action_failed.connect(self._on_action_failed)
-        self._apply_theme()
         self._init_ui()
+        self._apply_theme()
 
     def _apply_theme(self) -> None:
         self.setStyleSheet(
@@ -530,8 +530,7 @@ class MainWindow(QMainWindow):
     def _save_settings(self) -> None:
         self.settings.agent_name = self.agent_name.text().strip() or self.settings.agent_name
         save_settings(self.settings)
-        if hasattr(self, "agent_name_label"):
-            self.agent_name_label.setText(self.settings.agent_name)
+        self.agent_name_label.setText(self.settings.agent_name)
         QMessageBox.information(self, "Saved", "Settings saved.")
         self.statusBar().showMessage("Settings saved.", 3000)
 
