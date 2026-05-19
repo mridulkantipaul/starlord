@@ -65,6 +65,37 @@ def test_main_window_loads_and_core_buttons_exist(monkeypatch):
     assert window.windowTitle() == "Star Lord"
     for attr in ("listen_btn", "type_btn", "stop_btn", "play_btn", "send_btn", "memory_btn", "plugins_btn", "settings_btn"):
         assert getattr(window, attr).isEnabled()
+    assert window.agent_state_label.text() == "State: Ready"
+    assert window.session_indicator_label.text() == "Session: Default"
+
+    window.close()
+
+
+def test_navigation_buttons_switch_tabs_and_type_mode(monkeypatch):
+    monkeypatch.setattr(gui_qt, "Tray", _TrayStub)
+    monkeypatch.setattr(gui_qt, "LocalAPIServer", _ServerStub)
+    app = _get_app()
+    window = gui_qt.MainWindow()
+
+    window.settings_btn.click()
+    _wait_for_events(app)
+    assert window.tabs.currentWidget() is window.settings_tab
+    assert "Settings panel ready." in window.statusBar().currentMessage()
+
+    window.plugins_btn.click()
+    _wait_for_events(app)
+    assert window.tabs.currentWidget() is window.plugins_tab
+    assert "Plugin manager ready." in window.statusBar().currentMessage()
+
+    window.files_btn.click()
+    _wait_for_events(app)
+    assert window.tabs.currentWidget() is window.files_tab
+    assert "File explorer ready." in window.statusBar().currentMessage()
+
+    window.type_btn.click()
+    _wait_for_events(app)
+    assert window.agent_state_label.text() == "State: Typing"
+    assert "Type mode enabled." in window.statusBar().currentMessage()
 
     window.close()
 
@@ -82,6 +113,7 @@ def test_send_button_dispatches_response(monkeypatch):
 
     assert "> hello" in window.chat.toPlainText()
     assert "stub-response:hello" in window.chat.toPlainText()
+    assert window.agent_state_label.text() == "State: Ready"
     window.close()
 
 
@@ -109,4 +141,19 @@ def test_send_button_error_shows_feedback(monkeypatch):
     assert messages
     assert "Please check your settings" in messages[0]
     assert "Sorry, I couldn't process that request." in window.chat.toPlainText()
+    assert window.agent_state_label.text() == "State: Error"
+    window.close()
+
+
+def test_memory_button_empty_query_shows_feedback(monkeypatch):
+    monkeypatch.setattr(gui_qt, "Tray", _TrayStub)
+    monkeypatch.setattr(gui_qt, "LocalAPIServer", _ServerStub)
+    app = _get_app()
+    window = gui_qt.MainWindow()
+
+    window.input.clear()
+    window.memory_btn.click()
+    _wait_for_events(app)
+
+    assert "Enter text in the input box to search memory." in window.statusBar().currentMessage()
     window.close()

@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
     QFileSystemModel,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -67,12 +68,73 @@ class MainWindow(QMainWindow):
         self.action_failed.connect(self._on_action_failed)
         self._init_ui()
 
+    def _apply_theme(self) -> None:
+        self.setStyleSheet(
+            """
+            QMainWindow, QWidget {
+                background-color: #09111f;
+                color: #e8eefc;
+                font-size: 13px;
+            }
+            QPlainTextEdit, QTextEdit, QLineEdit, QListWidget, QTreeView, QTabWidget::pane {
+                background-color: #101a2d;
+                border: 1px solid #24314d;
+                border-radius: 10px;
+            }
+            QPushButton {
+                background-color: #13203a;
+                border: 1px solid #2e4266;
+                border-radius: 10px;
+                min-height: 36px;
+                padding: 6px 12px;
+            }
+            QPushButton:hover {
+                background-color: #1a2c4d;
+            }
+            QPushButton:disabled {
+                color: #7f8aa3;
+                background-color: #0f1729;
+            }
+            QTabBar::tab {
+                background-color: #101a2d;
+                border: 1px solid #24314d;
+                border-top-left-radius: 8px;
+                border-top-right-radius: 8px;
+                padding: 8px 12px;
+                margin-right: 4px;
+            }
+            QTabBar::tab:selected {
+                background-color: #173055;
+            }
+            QLabel#panelTitle {
+                font-size: 20px;
+                font-weight: 700;
+            }
+            QLabel#panelSubtitle {
+                color: #9cadcf;
+            }
+            QFrame#agentCard, QFrame#toolRail, QFrame#sessionRail {
+                background-color: #101a2d;
+                border: 1px solid #24314d;
+                border-radius: 14px;
+            }
+            QLabel#avatarLabel {
+                font-size: 48px;
+            }
+            QLabel#indicatorLabel {
+                color: #9cadcf;
+            }
+            """
+        )
+
     def _init_ui(self) -> None:
         root = QWidget()
         layout = QHBoxLayout(root)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(12)
 
         self.sessions = QListWidget()
-        self.sessions.setFixedWidth(200)
+        self.sessions.setMinimumWidth(200)
         self.sessions.addItem("Default")
         self.sessions.currentTextChanged.connect(self._switch_session)
         self.sessions.setCurrentRow(0)
@@ -94,7 +156,7 @@ class MainWindow(QMainWindow):
         self.listen_btn.setAccessibleName("Listen button")
 
         self.type_btn = QPushButton("Type")
-        self.type_btn.clicked.connect(self.input.setFocus)
+        self.type_btn.clicked.connect(self._enter_type_mode)
         self.type_btn.setShortcut("Ctrl+T")
         self.type_btn.setAccessibleName("Type mode button")
 
@@ -114,11 +176,11 @@ class MainWindow(QMainWindow):
         self.send_btn.setAccessibleName("Send message button")
 
         self.settings_btn = QPushButton("Settings")
-        self.settings_btn.clicked.connect(lambda: self.tabs.setCurrentWidget(self.settings_tab))
+        self.settings_btn.clicked.connect(lambda: self._activate_tab(self.settings_tab, "Settings panel ready."))
         self.settings_btn.setAccessibleName("Open settings button")
 
         self.files_btn = QPushButton("File Explorer")
-        self.files_btn.clicked.connect(lambda: self.tabs.setCurrentWidget(self.files_tab))
+        self.files_btn.clicked.connect(lambda: self._activate_tab(self.files_tab, "File explorer ready."))
         self.files_btn.setAccessibleName("Open file explorer button")
 
         self.memory_btn = QPushButton("Memory")
@@ -126,32 +188,25 @@ class MainWindow(QMainWindow):
         self.memory_btn.setAccessibleName("Memory search button")
 
         self.plugins_btn = QPushButton("Plugins")
-        self.plugins_btn.clicked.connect(lambda: self.tabs.setCurrentWidget(self.plugins_tab))
+        self.plugins_btn.clicked.connect(lambda: self._activate_tab(self.plugins_tab, "Plugin manager ready."))
         self.plugins_btn.setAccessibleName("Open plugins button")
 
         chat_layout = QVBoxLayout()
-        header = QLabel("🤖 Star Lord  |  🧑 Operator")
+        chat_layout.setSpacing(10)
+        header = QLabel("STAR LORD // COMMAND DECK")
+        header.setObjectName("panelTitle")
+        header.setAccessibleName("Agent header")
+        subtitle = QLabel("🤖 Star Lord  |  🧑 Operator  |  multimodal session online")
+        subtitle.setObjectName("panelSubtitle")
         chat_layout.addWidget(header)
-
-        tools_row = QHBoxLayout()
-        for btn in (
-            self.listen_btn,
-            self.type_btn,
-            self.stop_btn,
-            self.play_btn,
-            self.files_btn,
-            self.memory_btn,
-            self.plugins_btn,
-            self.settings_btn,
-        ):
-            tools_row.addWidget(btn)
-        chat_layout.addLayout(tools_row)
+        chat_layout.addWidget(subtitle)
         chat_layout.addWidget(self.chat)
 
         input_row = QHBoxLayout()
         input_row.addWidget(self.input)
         self.open_file_btn = QPushButton("Attach File")
         self.open_file_btn.clicked.connect(self._open_file)
+        self.open_file_btn.setAccessibleName("Attach file button")
         input_row.addWidget(self.open_file_btn)
         input_row.addWidget(self.send_btn)
         chat_layout.addLayout(input_row)
@@ -160,7 +215,6 @@ class MainWindow(QMainWindow):
         chat_panel.setLayout(chat_layout)
 
         self.tabs = QTabWidget()
-        self.tabs.addTab(chat_panel, "Chat")
         self.files_tab = self._build_files()
         self.tabs.addTab(self.files_tab, "Files")
         self.tabs.addTab(self._build_code(), "Code")
@@ -171,15 +225,50 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.settings_tab, "Settings")
 
         splitter = QSplitter(Qt.Horizontal)
-        session_panel = QWidget()
+        session_panel = QFrame()
+        session_panel.setObjectName("sessionRail")
         session_layout = QVBoxLayout(session_panel)
         session_layout.addWidget(QLabel("Sessions"))
         session_layout.addWidget(self.sessions)
         self.new_session_btn = QPushButton("New Session")
         self.new_session_btn.clicked.connect(self._new_session)
         session_layout.addWidget(self.new_session_btn)
+
+        utility_panel = QWidget()
+        utility_layout = QVBoxLayout(utility_panel)
+        utility_layout.setContentsMargins(0, 0, 0, 0)
+        utility_layout.setSpacing(12)
+        utility_layout.addWidget(chat_panel, 3)
+        utility_layout.addWidget(self.tabs, 2)
+
+        tool_panel = QFrame()
+        tool_panel.setObjectName("toolRail")
+        tool_layout = QVBoxLayout(tool_panel)
+        tool_layout.setSpacing(8)
+        tool_layout.addWidget(self._build_agent_card())
+        for btn in (
+            self.listen_btn,
+            self.type_btn,
+            self.send_btn,
+            self.stop_btn,
+            self.play_btn,
+            self.files_btn,
+            self.memory_btn,
+            self.plugins_btn,
+            self.settings_btn,
+        ):
+            tool_layout.addWidget(btn)
+        tool_layout.addStretch(1)
+
+        workspace = QWidget()
+        workspace_layout = QHBoxLayout(workspace)
+        workspace_layout.setContentsMargins(0, 0, 0, 0)
+        workspace_layout.setSpacing(12)
+        workspace_layout.addWidget(utility_panel, 1)
+        workspace_layout.addWidget(tool_panel)
+
         splitter.addWidget(session_panel)
-        splitter.addWidget(self.tabs)
+        splitter.addWidget(workspace)
         splitter.setStretchFactor(1, 1)
 
         layout.addWidget(splitter)
@@ -191,6 +280,9 @@ class MainWindow(QMainWindow):
         self.tray.quit_requested.connect(self.close)
         self.tray.show()
         self.statusBar().showMessage("Ready. System tray active.")
+        self._set_agent_state("Ready")
+        self._update_session_indicator("Default")
+        self._apply_theme()
 
     def _build_files(self) -> QWidget:
         widget = QWidget()
@@ -236,10 +328,10 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(widget)
         self.plugin_list = QListWidget()
         refresh_btn = QPushButton("Refresh")
-        refresh_btn.clicked.connect(self._refresh_plugins)
+        refresh_btn.clicked.connect(lambda: self._refresh_plugins(announce=True))
         layout.addWidget(self.plugin_list)
         layout.addWidget(refresh_btn)
-        self._refresh_plugins()
+        self._refresh_plugins(announce=False)
         return widget
 
     def _build_settings(self) -> QWidget:
@@ -265,8 +357,14 @@ class MainWindow(QMainWindow):
     def _listen(self) -> None:
         self._run_action("listen", self.command_system.handle_voice)
 
+    def _enter_type_mode(self) -> None:
+        self.input.setFocus()
+        self._set_agent_state("Typing")
+        self.statusBar().showMessage("Type mode enabled. Prompt box focused.", 3000)
+
     def _stop(self) -> None:
         message = self.command_system.request_stop()
+        self._set_agent_state("Stopped")
         self.statusBar().showMessage(message, 2000)
 
     def _play_last(self) -> None:
@@ -288,16 +386,22 @@ class MainWindow(QMainWindow):
         if not query:
             self.statusBar().showMessage("Enter text in the input box to search memory.", 3000)
             return
+        self._set_agent_state("Memory")
         items = self.command_system.query_memory(query)
         if not items:
             self.chat.appendPlainText("[memory] No matches.")
+            self.statusBar().showMessage("No memory matches found.", 3000)
+            self._set_agent_state("Ready")
             return
         self.chat.appendPlainText("[memory] Matches:")
         for item in items:
             self.chat.appendPlainText(f" - {item.text}")
+        self.statusBar().showMessage(f"Memory returned {len(items)} result(s).", 3000)
+        self._set_agent_state("Ready")
 
     def _run_action(self, action: str, fn: Callable[[], str]) -> None:
         self._set_controls_enabled(False)
+        self._set_agent_state(action.title())
         self.statusBar().showMessage(f"Running {action}...")
 
         def _worker() -> None:
@@ -318,10 +422,12 @@ class MainWindow(QMainWindow):
         else:
             self.chat.appendPlainText(result)
             self.statusBar().showMessage(f"{action.title()} complete.", 3000)
+        self._set_agent_state("Ready")
         self._set_controls_enabled(True)
 
     def _on_action_failed(self, action: str, error_type: str, error: str) -> None:
         self._set_controls_enabled(True)
+        self._set_agent_state("Error")
         self.statusBar().showMessage(f"{action.title()} failed.", 3000)
         friendly = "Please check your settings and try again."
         if error_type == "MissingDependencyError":
@@ -348,29 +454,83 @@ class MainWindow(QMainWindow):
             btn.setEnabled(enabled)
         self.stop_btn.setEnabled(True)
 
+    def _build_agent_card(self) -> QWidget:
+        widget = QFrame()
+        widget.setObjectName("agentCard")
+        layout = QVBoxLayout(widget)
+        layout.setSpacing(6)
+
+        avatar = QLabel("🤖")
+        avatar.setObjectName("avatarLabel")
+        avatar.setAlignment(Qt.AlignCenter)
+        layout.addWidget(avatar)
+
+        self.agent_name_label = QLabel(self.agent.name)
+        self.agent_name_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.agent_name_label)
+
+        self.agent_state_label = QLabel()
+        self.agent_state_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(self.agent_state_label)
+
+        self.system_indicator_label = QLabel("System: tray + API online")
+        self.system_indicator_label.setObjectName("indicatorLabel")
+        self.system_indicator_label.setWordWrap(True)
+        layout.addWidget(self.system_indicator_label)
+
+        self.session_indicator_label = QLabel()
+        self.session_indicator_label.setObjectName("indicatorLabel")
+        self.session_indicator_label.setWordWrap(True)
+        layout.addWidget(self.session_indicator_label)
+        return widget
+
+    def _activate_tab(self, tab: QWidget, message: str) -> None:
+        self.tabs.setCurrentWidget(tab)
+        self._set_agent_state("Ready")
+        self.statusBar().showMessage(message, 3000)
+
+    def _set_agent_state(self, state: str) -> None:
+        if hasattr(self, "agent_state_label"):
+            self.agent_state_label.setText(f"State: {state}")
+
+    def _update_session_indicator(self, name: str) -> None:
+        if hasattr(self, "session_indicator_label"):
+            self.session_indicator_label.setText(f"Session: {name}")
+
     def _run_code_assistant(self) -> None:
         code = self.code_input.toPlainText().strip()
         if not code:
+            self.statusBar().showMessage("Enter code before running the assistant.", 3000)
             return
         self.code_output.setPlainText("Code assistant (stub): add static analysis here.")
+        self.statusBar().showMessage("Code assistant analysis complete.", 3000)
 
     def _add_task(self) -> None:
         text = self.task_entry.text().strip()
         if not text:
+            self.statusBar().showMessage("Enter a task title first.", 3000)
             return
         self.task_entry.clear()
         self.task_store.add(Task(title=text))
         item = QListWidgetItem(text)
         self.task_list.addItem(item)
+        self.statusBar().showMessage(f"Task added: {text}", 3000)
 
-    def _refresh_plugins(self) -> None:
+    def _refresh_plugins(self, announce: bool = True) -> None:
         self.plugin_list.clear()
         for plugin in self.plugins.discover():
             self.plugin_list.addItem(f"{plugin.name} ({plugin.module})")
+        if announce:
+            count = self.plugin_list.count()
+            if count:
+                self.statusBar().showMessage(f"Loaded {count} plugin(s).", 3000)
+            else:
+                self.statusBar().showMessage("No plugins discovered.", 3000)
 
     def _save_settings(self) -> None:
         self.settings.agent_name = self.agent_name.text().strip() or self.settings.agent_name
         save_settings(self.settings)
+        self.agent_name_label.setText(self.settings.agent_name)
         QMessageBox.information(self, "Saved", "Settings saved.")
         self.statusBar().showMessage("Settings saved.", 3000)
 
@@ -381,12 +541,16 @@ class MainWindow(QMainWindow):
         self.chat.clear()
         if session.history:
             self.chat.appendPlainText("\n".join(session.history))
+        self._update_session_indicator(session.name)
+        self.statusBar().showMessage(f"Switched to {session.name}.", 3000)
 
     def _new_session(self) -> None:
         session = self.command_system.create_session("")
         self.sessions.addItem(session.name)
         self.sessions.setCurrentRow(self.sessions.count() - 1)
         self.chat.clear()
+        self._update_session_indicator(session.name)
+        self._set_agent_state("Ready")
         self.statusBar().showMessage(f"Created {session.name}.", 3000)
 
     def closeEvent(self, event) -> None:  # noqa: N802
