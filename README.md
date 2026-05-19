@@ -38,7 +38,6 @@ python -m starlord.app --gui
 ## Docs
 - `VOICE.md`
 - `MOBILE.md`
-- `INTERFACE.md`
 
 ## License
 TBD (open-source)
