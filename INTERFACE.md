@@ -6,10 +6,10 @@ The current UI is structured to match that design language: session rail, centra
 
 ## Frontends
 
-- **Primary:** PyQt (`/home/runner/work/starlord/starlord/src/starlord/gui_qt.py`)
-- **Fallback:** Tkinter (`/home/runner/work/starlord/starlord/src/starlord/gui.py`)
+- **Primary:** PyQt (`src/starlord/gui_qt.py`)
+- **Fallback:** Tkinter (`src/starlord/gui.py`)
 
-Both frontends call the same modular workflow layer: `/home/runner/work/starlord/starlord/src/starlord/command_system.py`.
+Both frontends call the same modular workflow layer: `src/starlord/command_system.py`.
 
 ## Layout Mapping
 

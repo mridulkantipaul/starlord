@@ -67,7 +67,6 @@ class MainWindow(QMainWindow):
         self.action_finished.connect(self._on_action_finished)
         self.action_failed.connect(self._on_action_failed)
         self._init_ui()
-        self._apply_theme()
 
     def _apply_theme(self) -> None:
         self.setStyleSheet(
@@ -283,6 +282,7 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("Ready. System tray active.")
         self._set_agent_state("Ready")
         self._update_session_indicator("Default")
+        self._apply_theme()
 
     def _build_files(self) -> QWidget:
         widget = QWidget()
