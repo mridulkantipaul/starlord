@@ -1,4 +1,4 @@
-<img width="1536" height="1024" alt="db302157-b800-484d-b15d-a282e9e612ba" src="https://github.com/user-attachments/assets/7c3282c9-5b10-4f5a-97b1-fa3dfc1409b9" />
+<img width="1536" height="1024" alt="StarLord" src="https://github.com/user-attachments/assets/4d6a8559-38aa-47c6-8259-13697cd9972f" />
 # Star Lord
 
 A JARVIS-like **personal AI agent** built for **local-first** use on desktop and mobile. Star Lord is designed to support **voice-first** interaction (with text fallback), act as a **coding helper**, and integrate with **smart home** control—while staying **open-source** and privacy-friendly.
