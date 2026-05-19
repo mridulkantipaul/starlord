@@ -21,5 +21,6 @@
 - [ ] Smart home integration
 
 ## Phase 4 — Mobile
+- [x] Android/iOS scaffolding
 - [ ] Android/iOS wrappers
 - [ ] On-device model options
