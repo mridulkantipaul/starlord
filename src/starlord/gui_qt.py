@@ -5,6 +5,7 @@ from __future__ import annotations
 import sys
 import threading
 from pathlib import Path
+from typing import Callable
 
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QIcon
@@ -40,7 +41,7 @@ from starlord.tasks import Task, TaskStore
 
 class MainWindow(QMainWindow):
     action_finished = Signal(str, str)
-    action_failed = Signal(str, str)
+    action_failed = Signal(str, str, str)
 
     def __init__(self) -> None:
         super().__init__()
@@ -295,7 +296,7 @@ class MainWindow(QMainWindow):
         for item in items:
             self.chat.appendPlainText(f" - {item.text}")
 
-    def _run_action(self, action: str, fn) -> None:
+    def _run_action(self, action: str, fn: Callable[[], str]) -> None:
         self._set_controls_enabled(False)
         self.statusBar().showMessage(f"Running {action}...")
 
@@ -304,7 +305,7 @@ class MainWindow(QMainWindow):
                 result = fn()
                 self.action_finished.emit(action, result)
             except Exception as exc:
-                self.action_failed.emit(action, str(exc))
+                self.action_failed.emit(action, exc.__class__.__name__, str(exc))
 
         threading.Thread(target=_worker, daemon=True).start()
 
@@ -319,10 +320,17 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"{action.title()} complete.", 3000)
         self._set_controls_enabled(True)
 
-    def _on_action_failed(self, action: str, error: str) -> None:
+    def _on_action_failed(self, action: str, error_type: str, error: str) -> None:
         self._set_controls_enabled(True)
         self.statusBar().showMessage(f"{action.title()} failed.", 3000)
-        QMessageBox.warning(self, "Action Error", f"{action.title()} failed:\n{error}")
+        friendly = "Please check your settings and try again."
+        if error_type == "MissingDependencyError":
+            friendly = "Missing optional dependency. Install the required voice package and try again."
+        elif error_type == "UserInputError":
+            friendly = "Selected file could not be loaded. Choose a different file and retry."
+        if action == "send":
+            self.chat.appendPlainText("[assistant] Sorry, I couldn't process that request.")
+        QMessageBox.warning(self, "Action Error", friendly)
 
     def _set_controls_enabled(self, enabled: bool) -> None:
         for btn in (

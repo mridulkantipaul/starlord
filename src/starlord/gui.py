@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tkinter as tk
+import threading
 from pathlib import Path
 from tkinter import filedialog, messagebox, scrolledtext
 from typing import Callable
@@ -90,11 +91,9 @@ class StarLordGUI:
             try:
                 result = fn()
             except Exception as exc:
-                self.root.after(0, lambda: self._handle_error(action_name, str(exc)))
+                self.root.after(0, lambda: self._handle_error(action_name, exc.__class__.__name__, str(exc)))
                 return
             self.root.after(0, lambda: self._handle_success(action_name, result))
-
-        import threading
 
         threading.Thread(target=worker, daemon=True).start()
 
@@ -110,10 +109,17 @@ class StarLordGUI:
             self.status_var.set(f"{action_name.title()} complete.")
         self._set_controls(True)
 
-    def _handle_error(self, action_name: str, error: str) -> None:
+    def _handle_error(self, action_name: str, error_type: str, _error: str) -> None:
         self._set_controls(True)
         self.status_var.set(f"{action_name.title()} failed.")
-        messagebox.showwarning("Action Error", f"{action_name.title()} failed:\n{error}")
+        friendly = "Please check your settings and try again."
+        if error_type == "MissingDependencyError":
+            friendly = "Missing optional dependency. Install the required voice package and retry."
+        elif error_type == "UserInputError":
+            friendly = "Selected file could not be loaded. Choose another file and retry."
+        if action_name == "send":
+            self._write("[assistant] Sorry, I couldn't process that request.")
+        messagebox.showwarning("Action Error", friendly)
 
     def _set_controls(self, enabled: bool) -> None:
         for widget in (

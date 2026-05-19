@@ -11,6 +11,20 @@ from starlord.core.agent import Agent
 from starlord.io.voice import VoiceIO
 from starlord.memory_store import FileMemoryStore, MemoryItem, SimpleVectorMemory
 
+FILE_CONTENT_PREVIEW_CHARS = 1200
+
+
+class CommandError(RuntimeError):
+    """Base command error for user-facing command failures."""
+
+
+class MissingDependencyError(CommandError):
+    """Raised when optional runtime dependencies are missing."""
+
+
+class UserInputError(CommandError):
+    """Raised for user-fixable input problems."""
+
 
 @dataclass
 class SessionState:
@@ -69,22 +83,28 @@ class AgentCommandSystem:
 
     def handle_voice(self) -> str:
         self._stop_requested = False
-        heard = self.voice.listen()
+        try:
+            heard = self.voice.listen()
+        except Exception as exc:
+            raise MissingDependencyError(str(exc)) from exc
         return heard.strip()
 
     def handle_file(self, path: str) -> str:
         file_path = Path(path).expanduser()
         if not file_path.exists() or not file_path.is_file():
-            raise FileNotFoundError(f"File not found: {file_path}")
-        content = file_path.read_text(encoding="utf-8", errors="ignore")[:1200]
+            raise UserInputError(f"File not found: {file_path}")
+        content = file_path.read_text(encoding="utf-8", errors="ignore")[:FILE_CONTENT_PREVIEW_CHARS]
         prompt = f"File input from {file_path.name}: {content}"
         return self.handle_text(prompt)
 
     def play_last_response(self) -> str:
         response = self.current_session().last_response
         if not response:
-            raise RuntimeError("No response available to play.")
-        return self.voice.speak(response)
+            raise UserInputError("No response available to play.")
+        try:
+            return self.voice.speak(response)
+        except Exception as exc:
+            raise MissingDependencyError(str(exc)) from exc
 
     def query_memory(self, query: str, k: int = 5) -> List[MemoryItem]:
         return self.vector_memory.query(query, k=k)

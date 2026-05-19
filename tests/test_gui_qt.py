@@ -11,7 +11,7 @@ import pytest
 
 try:
     from PySide6.QtWidgets import QApplication
-except Exception as exc:  # pragma: no cover - environment dependent
+except (ImportError, ModuleNotFoundError, OSError) as exc:  # pragma: no cover - environment dependent
     pytest.skip(f"Qt runtime not available: {exc}", allow_module_level=True)
 
 import starlord.gui_qt as gui_qt
@@ -82,4 +82,31 @@ def test_send_button_dispatches_response(monkeypatch):
 
     assert "> hello" in window.chat.toPlainText()
     assert "stub-response:hello" in window.chat.toPlainText()
+    window.close()
+
+
+def test_send_button_error_shows_feedback(monkeypatch):
+    monkeypatch.setattr(gui_qt, "Tray", _TrayStub)
+    monkeypatch.setattr(gui_qt, "LocalAPIServer", _ServerStub)
+    app = _get_app()
+    window = gui_qt.MainWindow()
+
+    messages: list[str] = []
+    monkeypatch.setattr(
+        gui_qt.QMessageBox,
+        "warning",
+        lambda _self, _title, msg: messages.append(msg),
+    )
+    def _raise_runtime_error(_text: str) -> str:
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(window.command_system, "handle_text", _raise_runtime_error)
+
+    window.input.setText("hello")
+    window.send_btn.click()
+    _wait_for_events(app)
+
+    assert messages
+    assert "Please check your settings" in messages[0]
+    assert "Sorry, I couldn't process that request." in window.chat.toPlainText()
     window.close()
